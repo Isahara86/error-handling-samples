@@ -59,7 +59,7 @@ async function handeOrderCancel(order: any): Promise<void> {
 
             await prevOrderHistory.destroy({ transaction });
             handleLog.isSuccess = true;
-            finishOrderHandling(handleLog).catch((err) => logger.error(err));
+            finishOrderHandlingWrapper(handleLog);
         });
     } catch (err) {
         return saveOrderHandleError(err, handleLog);
@@ -157,7 +157,7 @@ async function handleOrderCheckedOut(order: any): Promise<void> {
             orderHistory.blazeOrder = createdBlazeOrder;
             await orderHistory.save({ transaction });
             handleLog.isSuccess = true;
-            finishOrderHandling(handleLog).catch((err) => logger.error(err));
+            finishOrderHandlingWrapper(handleLog);
         });
     } catch (err) {
         return saveOrderHandleError(err, handleLog);
