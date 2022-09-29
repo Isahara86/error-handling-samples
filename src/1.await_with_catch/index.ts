@@ -52,11 +52,7 @@ async function handeOrderCancel(order: any): Promise<void> {
             handleLog.isSuccess = true;
             finishOrderHandling(handleLog).catch((err) => logger.error(err));
         }
-    }).catch((err) => {
-        handleLog.jsError = err;
-        finishOrderHandling(handleLog).catch((err) => logger.error(err));
-        return Promise.reject(err);
-    });
+    }).catch((err) => saveOrderHandleUnexpectedError(err, handleLog));
 }
 
 async function handleOrderCheckedOut(order: any): Promise<void> {
@@ -163,21 +159,24 @@ async function handleOrderCheckedOut(order: any): Promise<void> {
         );
         let createdBlazeOrder: BlazeConsumerCartDto;
         await checkoutCart(handleLog.blazeUserId, handleLog.preparedCart2Adjusted, config)
-            .then((c) => (createdBlazeOrder = c))
+            .then((c) => {
+                orderHistory.blazeOrder = c;
+                orderHistory.blazeOrderId = createdBlazeOrder.id;
+            })
             .catch((err) => (handleLog.checkoutCartErr = err));
 
         if (handleLog.checkoutCartErr) {
             return finishOrderHandling(handleLog);
         }
 
-        orderHistory.blazeOrderId = createdBlazeOrder.id;
-        orderHistory.blazeOrder = createdBlazeOrder;
         await orderHistory.save({ transaction });
         handleLog.isSuccess = true;
         finishOrderHandling(handleLog).catch((err) => logger.error(err));
-    }).catch((err) => {
-        handleLog.jsError = err;
-        finishOrderHandling(handleLog).catch((err) => logger.error(err));
-        return Promise.reject(err);
-    });
+    }).catch((err) => saveOrderHandleUnexpectedError(err, handleLog));
+}
+
+async function saveOrderHandleUnexpectedError(err: any, handleLog: IOrderHandleLog) {
+    handleLog.jsError = err;
+    finishOrderHandling(handleLog).catch((err) => logger.error(err));
+    return Promise.reject(err);
 }
